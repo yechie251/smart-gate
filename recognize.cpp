@@ -33,7 +33,7 @@ int main(){
 
 
   // read labels(classes) from text file
-  ifstream infile("./recognizer/labels.txt");
+  ifstream infile("./utils/labels.txt");
 
   int a;
   string b;
@@ -43,11 +43,11 @@ int main(){
 
   // define the face detector using cascade classifier
   CascadeClassifier classifier;
-  classifier.load("./cascades/lbpcascade_frontalface.xml");
+  classifier.load("./utils/lbpcascade_frontalface.xml");
 
   // define the face recognitizer using LBPH algorithm
   Ptr<LBPHFaceRecognizer> recognizer =  LBPHFaceRecognizer::create(2, 2, 7, 7, 17);
-  recognizer->read("./recognizer/embeddings.xml");
+  recognizer->read("./utils/embeddings.xml");
 
   Mat windowFrame;
   namedWindow("Security System", 1);
