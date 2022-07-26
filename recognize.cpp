@@ -94,7 +94,7 @@ int main(){
     }
 
     // show the captured frame with faces detected, label and confidence 
-    imshow("edges", frame);
+    imshow("Security System", frame);
     numframes++;
 
     //  if 'q' is pressed, close the program
