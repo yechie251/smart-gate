@@ -1,1 +1,6 @@
 /dataset/*
+/CMakeFiles
+cmake_install.cmake
+avraham_embeddings.xml
+yechiel_embeddings.xml
+CMakeCache.txt
