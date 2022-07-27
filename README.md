@@ -5,7 +5,11 @@
 4. build recogzie 
 5. run inference
 
+install wiringpi:
+```bash
 
+sudo apt-get install wiringpi
+```
 
 ## Build
 ```bash

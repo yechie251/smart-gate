@@ -3,6 +3,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/objdetect.hpp>
+#include <wiringPi.h>
 #include <iostream>
 
 using namespace std;
@@ -65,6 +66,7 @@ int main(){
     Mat aligned_face;
     Mat faces;
     Mat feature;
+    bool aouth;
     // real time cap frames
     for(;;){
 
@@ -90,22 +92,26 @@ int main(){
         if ((cos_score1 >= cosine_similar_thresh) && (L2_score1 <= l2norm_similar_thresh)){
             rectangle(frame, Rect2i(int(faces.at<float>(i, 0)), int(faces.at<float>(i, 1)), int(faces.at<float>(i, 2)), int(faces.at<float>(i, 3))), Scalar(0, 255, 0), 1);
             putText(frame, "Avraham", Point(int(faces.at<float>(i, 0)), int(faces.at<float>(i, 1))), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 2);
+            aouth = 1;
         }
         else if ((cos_score2 >= cosine_similar_thresh) && (L2_score2 <= l2norm_similar_thresh)){
         
             rectangle(frame, Rect2i(int(faces.at<float>(i, 0)), int(faces.at<float>(i, 1)), int(faces.at<float>(i, 2)), int(faces.at<float>(i, 3))), Scalar(0, 255, 0), 1);
             putText(frame, "Yechiel", Point(int(faces.at<float>(i, 0)), int(faces.at<float>(i, 1))), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 2);
+            aouth = 1;
         }
 
         else{
             rectangle(frame, Rect2i(int(faces.at<float>(i, 0)), int(faces.at<float>(i, 1)), int(faces.at<float>(i, 2)), int(faces.at<float>(i, 3))), Scalar(0, 0, 255), 1);
             putText(frame, "Unknown", Point(int(faces.at<float>(i, 0)), int(faces.at<float>(i, 1))), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 255), 2);
+            aouth = 0;
         }
         // draw rectangle
         
         }
         
     }
+    
     imshow("Live", frame);
     //  if 'q' is pressed, close the program
     if(waitKey(30) >=0) break;
