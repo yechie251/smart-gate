@@ -19,5 +19,5 @@ cmake . && make
 
 ## Real Time Inference
 ```bash
-./inference
+./loop
 ```
