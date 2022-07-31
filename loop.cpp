@@ -3,13 +3,19 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/objdetect.hpp>
-#include <wiringPi.h>
 #include <iostream>
+#include <stdio.h>
+#include <wiringPi.h>
+#include <wiringSerial.h>
+#include <unistd.h>
+#include <chrono>
+
 
 using namespace std;
 using namespace cv;
 
 
+    
 
 
 Mat Read_Embeddings(string path, int num_samples) {
@@ -28,15 +34,34 @@ Mat Read_Embeddings(string path, int num_samples) {
   // code block to be executed  
 }
 
+
 int main(){
+
+    // init timers
+
+    chrono::steady_clock::time_point prev = std::chrono::steady_clock::now();
+    chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+    int is_first = 1;
+
+    cout<<"start serial com to arduino"<<endl;
+    int fd;
+    if(wiringPiSetup() < 0)return 1;
+    if((fd = serialOpen("/dev/ttyACM0",9600)) < 0)return 1;
+    serialPutchar(fd,'0');
+    cout<<"arduino connected!"<<endl;
+
+    cout<<"start file"<<endl;
     // path to person 1 embedings
     string Avraham_path = "avraham_embeddings.xml";
     string Yechiel_path = "yechiel_embeddings.xml";
 
+    cout<<"read embeddings"<<endl;
     // get the embeddings matrix
-    Mat Embeddings_Avraham = Read_Embeddings(Avraham_path, 19);
-    Mat Embeddings_Yechiel = Read_Embeddings(Avraham_path, 20);
+    Mat Embeddings_Avraham = Read_Embeddings(Avraham_path, 2);
+    Mat Embeddings_Yechiel = Read_Embeddings(Avraham_path, 2);
 
+
+    cout<<"done read embeddings"<<endl;
     // print embeddings size
     cout << Embeddings_Avraham.size();
     cout << Embeddings_Yechiel.size();
@@ -52,16 +77,16 @@ int main(){
     double cosine_similar_thresh = 0.363;
     double l2norm_similar_thresh = 1.128;
 
-    Ptr<FaceDetectorYN> detector = FaceDetectorYN::create(fd_modelPath, "", Size(320, 320), scoreThreshold, nmsThreshold, topK);
+    Ptr<FaceDetectorYN> detector = FaceDetectorYN::create(fd_modelPath, "", Size(320, 240), scoreThreshold, nmsThreshold, topK);
     Ptr<FaceRecognizerSF> faceRecognizer = FaceRecognizerSF::create(fr_modelPath, "");
 
 
 
     // init the camera
-    VideoCapture cap(0);
+    VideoCapture cap(0, CAP_V4L2);
     cap.set(CAP_PROP_FRAME_WIDTH, 320);//Setting the width of the video
-    cap.set(CAP_PROP_FRAME_HEIGHT, 320);//Setting the height of the video//
-    if (!cap.isOpened()) {cout << "cannot open camera";}
+    cap.set(CAP_PROP_FRAME_HEIGHT, 240);//Setting the height of the video//
+    if (!cap.isOpened()) {cout << "cannot open camera";};
     Mat frame;
     Mat aligned_face;
     Mat faces;
@@ -93,12 +118,15 @@ int main(){
             rectangle(frame, Rect2i(int(faces.at<float>(i, 0)), int(faces.at<float>(i, 1)), int(faces.at<float>(i, 2)), int(faces.at<float>(i, 3))), Scalar(0, 255, 0), 1);
             putText(frame, "Avraham", Point(int(faces.at<float>(i, 0)), int(faces.at<float>(i, 1))), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 2);
             aouth = 1;
+            now = std::chrono::steady_clock::now();
+
         }
         else if ((cos_score2 >= cosine_similar_thresh) && (L2_score2 <= l2norm_similar_thresh)){
         
             rectangle(frame, Rect2i(int(faces.at<float>(i, 0)), int(faces.at<float>(i, 1)), int(faces.at<float>(i, 2)), int(faces.at<float>(i, 3))), Scalar(0, 255, 0), 1);
             putText(frame, "Yechiel", Point(int(faces.at<float>(i, 0)), int(faces.at<float>(i, 1))), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 255, 0), 2);
             aouth = 1;
+            now = std::chrono::steady_clock::now();
         }
 
         else{
@@ -106,7 +134,15 @@ int main(){
             putText(frame, "Unknown", Point(int(faces.at<float>(i, 0)), int(faces.at<float>(i, 1))), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 255), 2);
             aouth = 0;
         }
-        // draw rectangle
+        if (aouth == 1){
+            if ((chrono::duration_cast<std::chrono::microseconds>(now - prev).count()) >= 10000000){
+                serialPutchar(fd,'1');
+                serialPutchar(fd,'0');
+                prev = now;
+                aouth = 0;
+                }
+
+        }
         
         }
         
@@ -114,7 +150,10 @@ int main(){
     
     imshow("Live", frame);
     //  if 'q' is pressed, close the program
-    if(waitKey(30) >=0) break;
+    if(waitKey(30) >=0) {
+        break;
+        serialClose(fd);
+    }
     
     }
     return 0;
